@@ -158,6 +158,15 @@ export const airlinesApi = {
   ffPrograms: () => api.get<Array<{ program: string; airlines: Airline[] }>>('/airlines/ff-programs').then(r => r.data),
 };
 
+export interface AppSettings {
+  alert_email: string | null;
+}
+
+export const settingsApi = {
+  get: () => api.get<AppSettings>('/settings').then(r => r.data),
+  save: (data: Partial<AppSettings>) => api.put<{ ok: boolean }>('/settings', data).then(r => r.data),
+};
+
 export const demoApi = {
   seed: () => api.post<{ seeded: boolean; searches?: number; message?: string }>('/demo/seed').then(r => r.data),
   clear: () => api.delete<{ cleared: boolean; removed: number }>('/demo/clear').then(r => r.data),

@@ -1,8 +1,9 @@
-import { useState } from 'react';
-import { Settings2, ExternalLink, CheckCircle, XCircle, AlertTriangle, FlaskConical, Trash2, Loader2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Settings2, ExternalLink, CheckCircle, XCircle, AlertTriangle, FlaskConical, Trash2, Loader2, Bell, Save } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api, demoApi } from '../api/client';
+import { api, demoApi, settingsApi } from '../api/client';
 import { Card, Badge } from '../components/ui';
+import { Input } from '../components/ui';
 
 const isGHPages = import.meta.env.BASE_URL !== '/' && !import.meta.env.VITE_API_URL;
 
@@ -18,6 +19,29 @@ export default function Settings() {
     queryKey: ['health'],
     queryFn: () => api.get<HealthStatus>('/health').then(r => r.data),
     refetchInterval: 30000,
+  });
+
+  // Alert email setting
+  const [alertEmail, setAlertEmail] = useState('');
+  const [emailMsg, setEmailMsg] = useState<{ text: string; ok: boolean } | null>(null);
+
+  const { data: appSettings } = useQuery({
+    queryKey: ['app-settings'],
+    queryFn: settingsApi.get,
+  });
+
+  useEffect(() => {
+    if (appSettings?.alert_email) setAlertEmail(appSettings.alert_email);
+  }, [appSettings]);
+
+  const saveEmailMutation = useMutation({
+    mutationFn: () => settingsApi.save({ alert_email: alertEmail || null }),
+    onSuccess: () => {
+      setEmailMsg({ text: 'Saved — new searches will pre-fill this address.', ok: true });
+      queryClient.invalidateQueries({ queryKey: ['app-settings'] });
+      setTimeout(() => setEmailMsg(null), 4000);
+    },
+    onError: () => setEmailMsg({ text: 'Could not save — backend not reachable.', ok: false }),
   });
 
   const [demoMsg, setDemoMsg] = useState<{ text: string; ok: boolean } | null>(null);
@@ -98,6 +122,45 @@ export default function Settings() {
             detail="Configure in .env file"
           />
         </div>
+      </Card>
+
+      {/* Alert Email */}
+      <Card className="mb-6">
+        <h2 className="text-base font-semibold text-slate-200 mb-1 flex items-center gap-2">
+          <Bell className="w-4 h-4 text-brand-400" />
+          Alert Email
+        </h2>
+        <p className="text-sm text-slate-500 mb-4">
+          Your email address for price alert notifications. Used as the default for all searches —
+          you can still override it per search. SMTP credentials stay in the server's <code className="text-xs bg-navy-700 px-1 py-0.5 rounded text-brand-400">.env</code> file.
+        </p>
+        <div className="flex gap-3 items-end">
+          <div className="flex-1">
+            <Input
+              label="Your email address"
+              type="email"
+              value={alertEmail}
+              onChange={e => { setAlertEmail(e.target.value); setEmailMsg(null); }}
+              placeholder="you@example.com"
+            />
+          </div>
+          <button
+            onClick={() => saveEmailMutation.mutate()}
+            disabled={saveEmailMutation.isPending}
+            className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg bg-brand-600 hover:bg-brand-500 disabled:opacity-50 text-white transition-colors mb-0.5"
+          >
+            {saveEmailMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            Save
+          </button>
+        </div>
+        {emailMsg && (
+          <p className={`mt-2 text-sm ${emailMsg.ok ? 'text-emerald-400' : 'text-amber-400'}`}>
+            {emailMsg.ok
+              ? <CheckCircle className="w-3.5 h-3.5 inline mr-1.5 -mt-0.5" />
+              : <AlertTriangle className="w-3.5 h-3.5 inline mr-1.5 -mt-0.5" />}
+            {emailMsg.text}
+          </p>
+        )}
       </Card>
 
       {/* Configuration guide */}

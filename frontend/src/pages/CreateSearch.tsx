@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { ChevronRight, ChevronLeft, CheckCircle, Plane, Calendar, Filter, Bell } from 'lucide-react';
-import { searchesApi } from '../api/client';
+import { searchesApi, settingsApi } from '../api/client';
 import LocationInput from '../components/search/LocationInput';
 import AirlineSelector from '../components/search/AirlineSelector';
 import { Button, Input, Select, Card } from '../components/ui';
@@ -60,6 +60,17 @@ export default function CreateSearch() {
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<FormData>(defaultForm);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const { data: appSettings } = useQuery({
+    queryKey: ['app-settings'],
+    queryFn: settingsApi.get,
+  });
+
+  useEffect(() => {
+    if (appSettings?.alert_email && !form.alert_email) {
+      setForm(f => ({ ...f, alert_email: appSettings.alert_email ?? '' }));
+    }
+  }, [appSettings]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const createMutation = useMutation({
     mutationFn: () => searchesApi.create({

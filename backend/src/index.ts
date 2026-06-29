@@ -8,6 +8,7 @@ import flightsRouter from './routes/flights';
 import airlinesRouter from './routes/airlines';
 import historyRouter from './routes/history';
 import demoRouter from './routes/demo';
+import settingsRouter from './routes/settings';
 
 const PORT = process.env.PORT || 3001;
 
@@ -29,6 +30,7 @@ app.use('/api/flights', flightsRouter);
 app.use('/api/airlines', airlinesRouter);
 app.use('/api/history', historyRouter);
 app.use('/api/demo', demoRouter);
+app.use('/api/settings', settingsRouter);
 
 // Health check
 app.get('/api/health', (_req, res) => {

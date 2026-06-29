@@ -64,5 +64,23 @@ export function initDb() {
     CREATE INDEX IF NOT EXISTS idx_snapshots_search_id ON price_snapshots(search_id);
     CREATE INDEX IF NOT EXISTS idx_snapshots_checked_at ON price_snapshots(checked_at);
     CREATE INDEX IF NOT EXISTS idx_alerts_search_id ON alerts_log(search_id);
+
+    CREATE TABLE IF NOT EXISTS app_settings (
+      key   TEXT PRIMARY KEY,
+      value TEXT NOT NULL
+    );
   `);
+}
+
+export function getSetting(key: string): string | null {
+  const row = db.prepare(`SELECT value FROM app_settings WHERE key = ?`).get(key) as { value: string } | undefined;
+  return row?.value ?? null;
+}
+
+export function setSetting(key: string, value: string): void {
+  db.prepare(`INSERT INTO app_settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value`).run(key, value);
+}
+
+export function deleteSetting(key: string): void {
+  db.prepare(`DELETE FROM app_settings WHERE key = ?`).run(key);
 }

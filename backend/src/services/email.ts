@@ -1,6 +1,7 @@
 import nodemailer from 'nodemailer';
 import type { FlightOffer } from './amadeus';
 import type { AwardAvailability } from './seatAero';
+import { getSetting } from '../db/index';
 
 function getTransporter() {
   return nodemailer.createTransport({
@@ -117,9 +118,15 @@ function buildEmailHtml(payload: AlertPayload): string {
 </html>`;
 }
 
-export async function sendAlert(to: string, payload: AlertPayload): Promise<boolean> {
+export async function sendAlert(to: string | null | undefined, payload: AlertPayload): Promise<boolean> {
   if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
     console.log('[Email] SMTP not configured, skipping alert email');
+    return false;
+  }
+  // Fall back to the globally saved alert email if no per-search address is set
+  const recipient = to || getSetting('alert_email');
+  if (!recipient) {
+    console.log('[Email] No recipient email configured — set one in Settings or per-search');
     return false;
   }
   try {
@@ -137,7 +144,7 @@ export async function sendAlert(to: string, payload: AlertPayload): Promise<bool
 
     await transporter.sendMail({
       from: process.env.EMAIL_FROM || process.env.SMTP_USER,
-      to,
+      to: recipient,
       subject: `✈ FlightSourcer Alert: ${payload.route} from ${subjectParts.join(' / ')}`,
       html: buildEmailHtml(payload),
     });
