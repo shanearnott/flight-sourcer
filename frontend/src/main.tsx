@@ -14,9 +14,12 @@ const queryClient = new QueryClient({
   },
 });
 
+// On GitHub Pages the app lives at /flight-sourcer/
+const basename = import.meta.env.BASE_URL;
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <BrowserRouter>
+    <BrowserRouter basename={basename}>
       <QueryClientProvider client={queryClient}>
         <App />
       </QueryClientProvider>

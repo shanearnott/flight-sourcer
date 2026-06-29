@@ -1,7 +1,9 @@
-import { Settings2, ExternalLink, CheckCircle, XCircle } from 'lucide-react';
+import { Settings2, ExternalLink, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../api/client';
 import { Card, Badge } from '../components/ui';
+
+const isGHPages = import.meta.env.BASE_URL !== '/' && !import.meta.env.VITE_API_URL;
 
 interface HealthStatus {
   status: string;
@@ -24,6 +26,21 @@ export default function Settings() {
         </h1>
         <p className="text-slate-400 text-sm mt-1">Configuration and API status</p>
       </div>
+
+      {isGHPages && (
+        <div className="mb-6 flex items-start gap-3 px-4 py-3.5 bg-amber-500/10 border border-amber-500/30 rounded-xl text-sm text-amber-300">
+          <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+          <div>
+            <div className="font-medium mb-1">Backend not connected</div>
+            <div className="text-amber-400/70">
+              This UI is running on GitHub Pages. To search flights, set the{' '}
+              <code className="text-xs bg-amber-500/20 px-1.5 py-0.5 rounded">VITE_API_URL</code> repository secret
+              to your backend URL (e.g. <code className="text-xs bg-amber-500/20 px-1.5 py-0.5 rounded">https://your-backend.railway.app</code>)
+              and re-run the deployment workflow.
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* API Status */}
       <Card className="mb-6">
