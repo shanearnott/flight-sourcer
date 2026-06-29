@@ -17,6 +17,7 @@ export default function App() {
         <Route path="searches" element={<SearchesList />} />
         <Route path="searches/new" element={<CreateSearch />} />
         <Route path="search/:id" element={<SearchDetail />} />
+        <Route path="search/:id/run" element={<SearchDetail autoRun />} />
         <Route path="search/:id/edit" element={<EditSearch />} />
         <Route path="history" element={<PriceHistory />} />
         <Route path="alerts" element={<AlertLog />} />

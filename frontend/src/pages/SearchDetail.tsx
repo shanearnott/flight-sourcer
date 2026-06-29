@@ -83,7 +83,7 @@ function AwardRow({ award }: { award: AwardOffer }) {
   );
 }
 
-export default function SearchDetail() {
+export default function SearchDetail({ autoRun = false }: { autoRun?: boolean }) {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'cash' | 'award'>('cash');
@@ -91,6 +91,7 @@ export default function SearchDetail() {
   const [running, setRunning] = useState(false);
   const [runProgress, setRunProgress] = useState<RunProgress | null>(null);
   const [pendingConfirm, setPendingConfirm] = useState<{ calls: number } | null>(null);
+  const autoRunFiredRef = useRef(false);
   const eventSourceRef = useRef<EventSource | null>(null);
 
   const { data: search, isLoading: searchLoading } = useQuery({
@@ -120,6 +121,14 @@ export default function SearchDetail() {
   useEffect(() => {
     return () => { eventSourceRef.current?.close(); };
   }, []);
+
+  useEffect(() => {
+    if (autoRun && !autoRunFiredRef.current && search && !running) {
+      autoRunFiredRef.current = true;
+      runSearch();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoRun, search]);
 
   async function stopSearch() {
     if (!id) return;
