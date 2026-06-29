@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import { db } from '../db/index';
-import { searchFlightOffers } from './amadeus';
+import { searchFlightOffers } from './serpapi';
 import { searchAwardAvailability } from './seatAero';
 import { getDatePairs } from '../utils/dateRanges';
 import { sendAlert } from './email';
@@ -69,7 +69,7 @@ export async function runSearch(
 
   onProgress?.({ type: 'start', message: `Starting search: ${airportPairs.length} routes × ${datePairs.length} date pairs`, total: totalCalls, current: 0 });
 
-  const cashAlerts: import('./amadeus').FlightOffer[] = [];
+  const cashAlerts: import('./serpapi').FlightOffer[] = [];
   const awardAlerts: import('./seatAero').AwardAvailability[] = [];
 
   for (const [orig, dest] of airportPairs) {
