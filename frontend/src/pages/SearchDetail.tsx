@@ -120,7 +120,8 @@ export default function SearchDetail() {
     setRunning(true);
     setRunProgress({ type: 'start', message: 'Starting...', current: 0, total: 0 });
 
-    const es = new EventSource(`/api/searches/${id}/run`);
+    const apiBase = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : '/api';
+    const es = new EventSource(`${apiBase}/searches/${id}/run`);
     eventSourceRef.current = es;
 
     es.onmessage = (e) => {
