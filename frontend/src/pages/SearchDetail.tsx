@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Play, RefreshCw, Plane, Award, Clock, ArrowRight, Layers } from 'lucide-react';
+import { ArrowLeft, Play, RefreshCw, Plane, Award, Clock, ArrowRight, Layers, Pencil } from 'lucide-react';
 import { searchesApi, historyApi, type FlightOffer, type AwardOffer } from '../api/client';
 import PriceAreaChart from '../components/charts/PriceAreaChart';
 import { Button, Badge, Spinner, Card, EmptyState, ProgressBar } from '../components/ui';
@@ -85,6 +85,7 @@ function AwardRow({ award }: { award: AwardOffer }) {
 
 export default function SearchDetail() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'cash' | 'award'>('cash');
   const [chartDays, setChartDays] = useState(30);
   const [running, setRunning] = useState(false);
@@ -169,9 +170,14 @@ export default function SearchDetail() {
             <span>{cabinLabel(search.cabin_class)}</span>
           </div>
         </div>
-        <Button onClick={runSearch} loading={running} disabled={running}>
-          {running ? <><RefreshCw className="w-4 h-4 animate-spin" />Running...</> : <><Play className="w-4 h-4" />Search Now</>}
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="secondary" onClick={() => navigate(`/search/${id}/edit`)}>
+            <Pencil className="w-4 h-4" />Edit
+          </Button>
+          <Button onClick={runSearch} loading={running} disabled={running}>
+            {running ? <><RefreshCw className="w-4 h-4 animate-spin" />Running...</> : <><Play className="w-4 h-4" />Search Now</>}
+          </Button>
+        </div>
       </div>
 
       {/* Run progress */}

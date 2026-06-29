@@ -3,6 +3,7 @@ import Layout from './components/layout/Layout';
 import Dashboard from './pages/Dashboard';
 import SearchesList from './pages/SearchesList';
 import CreateSearch from './pages/CreateSearch';
+import EditSearch from './pages/EditSearch';
 import SearchDetail from './pages/SearchDetail';
 import PriceHistory from './pages/PriceHistory';
 import AlertLog from './pages/AlertLog';
@@ -16,6 +17,7 @@ export default function App() {
         <Route path="searches" element={<SearchesList />} />
         <Route path="searches/new" element={<CreateSearch />} />
         <Route path="search/:id" element={<SearchDetail />} />
+        <Route path="search/:id/edit" element={<EditSearch />} />
         <Route path="history" element={<PriceHistory />} />
         <Route path="alerts" element={<AlertLog />} />
         <Route path="settings" element={<Settings />} />
