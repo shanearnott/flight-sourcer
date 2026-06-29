@@ -30,6 +30,12 @@ export default function Settings() {
     queryFn: settingsApi.get,
   });
 
+  const { data: apiStatus } = useQuery({
+    queryKey: ['api-status'],
+    queryFn: settingsApi.status,
+    enabled: !!health,
+  });
+
   useEffect(() => {
     if (appSettings?.alert_email) setAlertEmail(appSettings.alert_email);
   }, [appSettings]);
@@ -106,26 +112,26 @@ export default function Settings() {
           <StatusRow
             label="SerpApi"
             description="Cash fare search (Google Flights)"
-            ok={null}
-            detail="Configure SERPAPI_KEY in .env"
+            ok={apiStatus ? apiStatus.serpapi : null}
+            detail={apiStatus ? (apiStatus.serpapi ? 'Configured' : 'SERPAPI_KEY not set') : 'Checking...'}
           />
           <StatusRow
             label="AviationStack"
             description="Airport search (optional)"
-            ok={null}
-            detail="Configure AVIATIONSTACK_KEY in .env"
+            ok={apiStatus ? apiStatus.aviationstack : null}
+            detail={apiStatus ? (apiStatus.aviationstack ? 'Configured' : 'AVIATIONSTACK_KEY not set') : 'Checking...'}
           />
           <StatusRow
             label="Seat.aero API"
             description="Award seat search"
-            ok={null}
-            detail="Configure in .env file"
+            ok={apiStatus ? apiStatus.seat_aero : null}
+            detail={apiStatus ? (apiStatus.seat_aero ? 'Configured' : 'SEAT_AERO_API_KEY not set') : 'Checking...'}
           />
           <StatusRow
             label="Email (SMTP)"
             description="Price alerts"
-            ok={null}
-            detail="Configure in .env file"
+            ok={apiStatus ? apiStatus.smtp : null}
+            detail={apiStatus ? (apiStatus.smtp ? 'Configured' : 'SMTP credentials not set') : 'Checking...'}
           />
         </div>
       </Card>

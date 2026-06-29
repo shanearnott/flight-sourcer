@@ -16,6 +16,16 @@ router.get('/', (_req, res) => {
   res.json(result);
 });
 
+// GET /api/settings/status — which API keys are configured
+router.get('/status', (_req, res) => {
+  res.json({
+    serpapi: !!process.env.SERPAPI_KEY,
+    aviationstack: !!process.env.AVIATIONSTACK_KEY,
+    seat_aero: !!process.env.SEAT_AERO_API_KEY,
+    smtp: !!(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS),
+  });
+});
+
 // PUT /api/settings
 router.put('/', (req, res) => {
   const Schema = z.object({

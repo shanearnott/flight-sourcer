@@ -162,9 +162,17 @@ export interface AppSettings {
   alert_email: string | null;
 }
 
+export interface ApiStatus {
+  serpapi: boolean;
+  aviationstack: boolean;
+  seat_aero: boolean;
+  smtp: boolean;
+}
+
 export const settingsApi = {
   get: () => api.get<AppSettings>('/settings').then(r => r.data),
   save: (data: Partial<AppSettings>) => api.put<{ ok: boolean }>('/settings', data).then(r => r.data),
+  status: () => api.get<ApiStatus>('/settings/status').then(r => r.data),
 };
 
 export const demoApi = {
