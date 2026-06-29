@@ -104,10 +104,16 @@ export default function Settings() {
             detail={health ? 'Connected' : 'Not reachable'}
           />
           <StatusRow
-            label="Amadeus API"
-            description="Cash fare search"
+            label="SerpApi"
+            description="Cash fare search (Google Flights)"
             ok={null}
-            detail="Configure in .env file"
+            detail="Configure SERPAPI_KEY in .env"
+          />
+          <StatusRow
+            label="AviationStack"
+            description="Airport search (optional)"
+            ok={null}
+            detail="Configure AVIATIONSTACK_KEY in .env"
           />
           <StatusRow
             label="Seat.aero API"
@@ -170,20 +176,31 @@ export default function Settings() {
           <div>
             <div className="flex items-center gap-2 mb-2">
               <Badge variant="info">1</Badge>
-              <span className="font-medium text-slate-200">Amadeus Self-Service API (Free)</span>
+              <span className="font-medium text-slate-200">SerpApi — Google Flights (Cash fares)</span>
             </div>
-            <p className="text-slate-500 ml-7 mb-2">Register at developers.amadeus.com and create a Self-Service app. Copy the Client ID and Secret to your <code className="text-xs bg-navy-700 px-1.5 py-0.5 rounded text-brand-400">.env</code> file.</p>
-            <a href="https://developers.amadeus.com" target="_blank" rel="noopener noreferrer" className="ml-7 inline-flex items-center gap-1 text-brand-400 hover:text-brand-300 transition-colors text-xs">
-              developers.amadeus.com <ExternalLink className="w-3 h-3" />
+            <p className="text-slate-500 ml-7 mb-2">Register at serpapi.com and copy your API key to <code className="text-xs bg-navy-700 px-1.5 py-0.5 rounded text-brand-400">SERPAPI_KEY</code> in your <code className="text-xs bg-navy-700 px-1.5 py-0.5 rounded text-brand-400">.env</code> file. Free tier: 100 searches/month.</p>
+            <a href="https://serpapi.com" target="_blank" rel="noopener noreferrer" className="ml-7 inline-flex items-center gap-1 text-brand-400 hover:text-brand-300 transition-colors text-xs">
+              serpapi.com <ExternalLink className="w-3 h-3" />
             </a>
           </div>
 
           <div className="border-t border-navy-700 pt-4">
             <div className="flex items-center gap-2 mb-2">
-              <Badge variant="warning">2</Badge>
-              <span className="font-medium text-slate-200">Seat.aero Partner API (Paid)</span>
+              <Badge variant="info">2</Badge>
+              <span className="font-medium text-slate-200">AviationStack — Airport search (optional)</span>
             </div>
-            <p className="text-slate-500 ml-7 mb-2">Apply for Partner API access at seats.aero. Provides real-time award availability across major frequent flyer programs.</p>
+            <p className="text-slate-500 ml-7 mb-2">Supplements the built-in airport database for obscure airports. Free tier (100 calls/month) is sufficient. Add key as <code className="text-xs bg-navy-700 px-1.5 py-0.5 rounded text-brand-400">AVIATIONSTACK_KEY</code>.</p>
+            <a href="https://aviationstack.com" target="_blank" rel="noopener noreferrer" className="ml-7 inline-flex items-center gap-1 text-brand-400 hover:text-brand-300 transition-colors text-xs">
+              aviationstack.com <ExternalLink className="w-3 h-3" />
+            </a>
+          </div>
+
+          <div className="border-t border-navy-700 pt-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Badge variant="warning">3</Badge>
+              <span className="font-medium text-slate-200">Seat.aero — Award availability</span>
+            </div>
+            <p className="text-slate-500 ml-7 mb-2">Personal and Partner plans both use the same API endpoint. Sign up at seats.aero and add your key as <code className="text-xs bg-navy-700 px-1.5 py-0.5 rounded text-brand-400">SEAT_AERO_API_KEY</code>.</p>
             <a href="https://seats.aero" target="_blank" rel="noopener noreferrer" className="ml-7 inline-flex items-center gap-1 text-brand-400 hover:text-brand-300 transition-colors text-xs">
               seats.aero <ExternalLink className="w-3 h-3" />
             </a>
@@ -191,7 +208,7 @@ export default function Settings() {
 
           <div className="border-t border-navy-700 pt-4">
             <div className="flex items-center gap-2 mb-2">
-              <Badge variant="default">3</Badge>
+              <Badge variant="default">4</Badge>
               <span className="font-medium text-slate-200">Email Alerts (SMTP)</span>
             </div>
             <p className="text-slate-500 ml-7">Configure SMTP settings in <code className="text-xs bg-navy-700 px-1.5 py-0.5 rounded text-brand-400">.env</code>. For Gmail, use an App Password (not your main password). Alerts are sent daily at 6:00 AM when prices are below your threshold.</p>
@@ -240,9 +257,9 @@ export default function Settings() {
         <h2 className="text-base font-semibold text-slate-200 mb-3">Environment File Template</h2>
         <p className="text-sm text-slate-500 mb-3">Create <code className="text-xs bg-navy-700 px-1.5 py-0.5 rounded text-brand-400">backend/.env</code> with:</p>
         <pre className="bg-navy-950 rounded-lg p-4 text-xs text-slate-300 overflow-x-auto border border-navy-700 font-mono leading-relaxed">
-{`AMADEUS_CLIENT_ID=your_client_id
-AMADEUS_CLIENT_SECRET=your_client_secret
-AMADEUS_HOSTNAME=production
+{`SERPAPI_KEY=your_serpapi_key
+
+AVIATIONSTACK_KEY=your_aviationstack_key
 
 SEAT_AERO_API_KEY=your_seat_aero_key
 

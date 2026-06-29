@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { searchFlightOffers } from '../services/amadeus';
+import { searchFlightOffers } from '../services/serpapi';
 import { searchAwardAvailability } from '../services/seatAero';
-import { searchLocations } from '../services/amadeus';
+import { searchLocations } from '../services/aviationstack';
 
 const router = Router();
 
