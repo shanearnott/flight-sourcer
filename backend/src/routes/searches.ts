@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 import { db } from '../db/index';
-import { runSearch, type SearchRecord } from '../services/orchestrator';
+import { runSearch, cancelSearch, type SearchRecord } from '../services/orchestrator';
 
 const router = Router();
 
@@ -181,7 +181,13 @@ router.delete('/:id', (req, res) => {
   res.status(204).send();
 });
 
-// POST /api/searches/:id/run - SSE progress stream
+// POST /api/searches/:id/cancel
+router.post('/:id/cancel', (req, res) => {
+  cancelSearch(req.params.id);
+  res.json({ ok: true });
+});
+
+// GET /api/searches/:id/run - SSE progress stream
 router.get('/:id/run', async (req, res) => {
   const search = db.prepare(`SELECT * FROM searches WHERE id = ?`).get(req.params.id) as SearchRecord | undefined;
   if (!search) {

@@ -1,5 +1,21 @@
 import axios from 'axios';
 import type { FlightOffer, FlightSegment, CashSearchParams } from './amadeus';
+import { getSetting, setSetting } from '../db/index';
+
+function trackUsage() {
+  const month = new Date().toISOString().slice(0, 7);
+  const storedMonth = getSetting('serpapi_usage_month');
+  const count = storedMonth === month ? parseInt(getSetting('serpapi_usage_count') || '0') + 1 : 1;
+  setSetting('serpapi_usage_month', month);
+  setSetting('serpapi_usage_count', count.toString());
+}
+
+export function getSerpApiUsage(): { count: number; month: string } {
+  const month = new Date().toISOString().slice(0, 7);
+  const storedMonth = getSetting('serpapi_usage_month');
+  const count = storedMonth === month ? parseInt(getSetting('serpapi_usage_count') || '0') : 0;
+  return { count, month };
+}
 
 const CABIN_CLASS_MAP: Record<string, number> = {
   ECONOMY: 1,
@@ -111,6 +127,7 @@ export async function searchFlightOffers(params: CashSearchParams): Promise<Flig
   if (params.maxResults) query.max_price = 99999; // no direct count limit; filter after
 
   try {
+    trackUsage();
     const resp = await axios.get('https://serpapi.com/search', {
       params: query,
       timeout: 15000,

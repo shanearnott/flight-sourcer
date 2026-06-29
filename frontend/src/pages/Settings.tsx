@@ -113,7 +113,11 @@ export default function Settings() {
             label="SerpApi"
             description="Cash fare search (Google Flights)"
             ok={apiStatus ? apiStatus.serpapi : null}
-            detail={apiStatus ? (apiStatus.serpapi ? 'Configured' : 'SERPAPI_KEY not set') : 'Checking...'}
+            detail={apiStatus
+              ? (apiStatus.serpapi
+                ? `Configured · ${apiStatus.serpapi_used}/${apiStatus.serpapi_limit} searches this month`
+                : 'SERPAPI_KEY not set')
+              : 'Checking...'}
           />
           <StatusRow
             label="AviationStack"

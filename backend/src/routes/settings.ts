@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { getSetting, setSetting, deleteSetting } from '../db/index';
+import { getSerpApiUsage } from '../services/serpapi';
 
 const router = Router();
 
@@ -18,8 +19,11 @@ router.get('/', (_req, res) => {
 
 // GET /api/settings/status — which API keys are configured
 router.get('/status', (_req, res) => {
+  const { count: serpApiUsed } = getSerpApiUsage();
   res.json({
     serpapi: !!process.env.SERPAPI_KEY,
+    serpapi_used: serpApiUsed,
+    serpapi_limit: 100,
     aviationstack: !!process.env.AVIATIONSTACK_KEY,
     seat_aero: !!process.env.SEAT_AERO_API_KEY,
     smtp: !!(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS),

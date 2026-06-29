@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Play, RefreshCw, Plane, Award, Clock, ArrowRight, Layers, Pencil } from 'lucide-react';
+import { ArrowLeft, Play, RefreshCw, Plane, Award, Clock, ArrowRight, Layers, Pencil, Square } from 'lucide-react';
 import { searchesApi, historyApi, type FlightOffer, type AwardOffer } from '../api/client';
 import PriceAreaChart from '../components/charts/PriceAreaChart';
 import { Button, Badge, Spinner, Card, EmptyState, ProgressBar } from '../components/ui';
@@ -114,6 +114,14 @@ export default function SearchDetail() {
     return () => { eventSourceRef.current?.close(); };
   }, []);
 
+  async function stopSearch() {
+    if (!id) return;
+    eventSourceRef.current?.close();
+    await searchesApi.cancel(id);
+    setRunning(false);
+    setRunProgress({ type: 'error', message: 'Search stopped' });
+  }
+
   function runSearch() {
     if (!id || running) return;
     eventSourceRef.current?.close();
@@ -171,12 +179,18 @@ export default function SearchDetail() {
           </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="secondary" onClick={() => navigate(`/search/${id}/edit`)}>
+          <Button variant="secondary" onClick={() => navigate(`/search/${id}/edit`)} disabled={running}>
             <Pencil className="w-4 h-4" />Edit
           </Button>
-          <Button onClick={runSearch} loading={running} disabled={running}>
-            {running ? <><RefreshCw className="w-4 h-4 animate-spin" />Running...</> : <><Play className="w-4 h-4" />Search Now</>}
-          </Button>
+          {running ? (
+            <Button variant="danger" onClick={stopSearch}>
+              <Square className="w-4 h-4" />Stop
+            </Button>
+          ) : (
+            <Button onClick={runSearch}>
+              <Play className="w-4 h-4" />Search Now
+            </Button>
+          )}
         </div>
       </div>
 

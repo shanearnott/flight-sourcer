@@ -135,6 +135,7 @@ export const searchesApi = {
   update: (id: string, data: Partial<SavedSearch>) =>
     api.put<SavedSearch>(`/searches/${id}`, data).then(r => r.data),
   toggle: (id: string) => api.patch<{ is_active: number }>(`/searches/${id}/toggle`).then(r => r.data),
+  cancel: (id: string) => api.post(`/searches/${id}/cancel`).then(r => r.data),
   delete: (id: string) => api.delete(`/searches/${id}`),
 };
 
@@ -164,6 +165,8 @@ export interface AppSettings {
 
 export interface ApiStatus {
   serpapi: boolean;
+  serpapi_used: number;
+  serpapi_limit: number;
   aviationstack: boolean;
   seat_aero: boolean;
   smtp: boolean;

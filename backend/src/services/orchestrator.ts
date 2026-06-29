@@ -5,6 +5,12 @@ import { searchAwardAvailability } from './seatAero';
 import { getDatePairs } from '../utils/dateRanges';
 import { sendAlert } from './email';
 
+const cancelRequested = new Set<string>();
+
+export function cancelSearch(searchId: string) {
+  cancelRequested.add(searchId);
+}
+
 export interface SearchRecord {
   id: string;
   name: string;
@@ -74,6 +80,12 @@ export async function runSearch(
 
   for (const [orig, dest] of airportPairs) {
     for (const { depart, return: ret } of datePairs) {
+      if (cancelRequested.has(search.id)) {
+        cancelRequested.delete(search.id);
+        onProgress?.({ type: 'error', message: 'Search cancelled' });
+        return;
+      }
+
       if (search.search_mode === 'cash' || search.search_mode === 'both') {
         try {
           const offers = await searchFlightOffers({
