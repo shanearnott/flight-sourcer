@@ -136,6 +136,7 @@ export const searchesApi = {
     api.put<SavedSearch>(`/searches/${id}`, data).then(r => r.data),
   toggle: (id: string) => api.patch<{ is_active: number }>(`/searches/${id}/toggle`).then(r => r.data),
   cancel: (id: string) => api.post(`/searches/${id}/cancel`).then(r => r.data),
+  estimate: (id: string) => api.get<{ serpapi_calls: number }>(`/searches/${id}/estimate`).then(r => r.data),
   delete: (id: string) => api.delete(`/searches/${id}`),
 };
 

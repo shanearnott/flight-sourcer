@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 import { db } from '../db/index';
 import { runSearch, cancelSearch, type SearchRecord } from '../services/orchestrator';
+import { getDatePairs } from '../utils/dateRanges';
 
 const router = Router();
 
@@ -178,6 +179,24 @@ router.delete('/:id', (req, res) => {
   }
   db.prepare(`DELETE FROM searches WHERE id = ?`).run(req.params.id);
   res.status(204).send();
+});
+
+// GET /api/searches/:id/estimate — how many SerpApi calls this search will make
+router.get('/:id/estimate', (req, res) => {
+  const search = db.prepare(`SELECT * FROM searches WHERE id = ?`).get(req.params.id) as SearchRecord | undefined;
+  if (!search) { res.status(404).json({ error: 'Not found' }); return; }
+
+  const originAirports: string[] = JSON.parse(search.origin_airports);
+  const destAirports: string[] = JSON.parse(search.destination_airports);
+  const cabinClasses = parseCabinClass(search.cabin_class);
+  const datePairs = getDatePairs(search.trip_type, search.window_start, search.window_end, search.min_nights, search.max_nights);
+  const airportPairs = Math.min(3, originAirports.length) * Math.min(3, destAirports.length);
+
+  const serpapi_calls = (search.search_mode === 'cash' || search.search_mode === 'both')
+    ? airportPairs * datePairs.length * cabinClasses.length
+    : 0;
+
+  res.json({ serpapi_calls });
 });
 
 // POST /api/searches/:id/cancel

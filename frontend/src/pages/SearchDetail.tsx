@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Play, RefreshCw, Plane, Award, Clock, ArrowRight, Layers, Pencil, Square } from 'lucide-react';
-import { searchesApi, historyApi, type FlightOffer, type AwardOffer } from '../api/client';
+import { ArrowLeft, Play, RefreshCw, Plane, Award, Clock, ArrowRight, Layers, Pencil, Square, AlertTriangle, Zap } from 'lucide-react';
+import { searchesApi, historyApi, settingsApi, type FlightOffer, type AwardOffer } from '../api/client';
 import PriceAreaChart from '../components/charts/PriceAreaChart';
 import { Button, Badge, Spinner, Card, EmptyState, ProgressBar } from '../components/ui';
 import { formatCurrency, formatPoints, formatDuration, formatDate, formatDateTime, formatStops, cabinLabel, formatRelativeTime } from '../utils/formatters';
@@ -90,6 +90,7 @@ export default function SearchDetail() {
   const [chartDays, setChartDays] = useState(30);
   const [running, setRunning] = useState(false);
   const [runProgress, setRunProgress] = useState<RunProgress | null>(null);
+  const [pendingConfirm, setPendingConfirm] = useState<{ calls: number } | null>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
 
   const { data: search, isLoading: searchLoading } = useQuery({
@@ -110,6 +111,12 @@ export default function SearchDetail() {
     enabled: !!id,
   });
 
+  const { data: apiStatus } = useQuery({
+    queryKey: ['api-status'],
+    queryFn: () => settingsApi.status(),
+    staleTime: 60 * 1000,
+  });
+
   useEffect(() => {
     return () => { eventSourceRef.current?.close(); };
   }, []);
@@ -122,9 +129,10 @@ export default function SearchDetail() {
     setRunProgress({ type: 'error', message: 'Search stopped' });
   }
 
-  function runSearch() {
+  function startSearchStream() {
     if (!id || running) return;
     eventSourceRef.current?.close();
+    setPendingConfirm(null);
 
     setRunning(true);
     setRunProgress({ type: 'start', message: 'Starting...', current: 0, total: 0 });
@@ -149,6 +157,24 @@ export default function SearchDetail() {
       setRunProgress({ type: 'error', message: 'Connection failed' });
       es.close();
     };
+  }
+
+  async function runSearch() {
+    if (!id || running) return;
+
+    if (apiStatus?.serpapi) {
+      const limit = apiStatus.serpapi_limit;
+      const threshold = Math.floor(limit / 5);
+      let est: { serpapi_calls: number } | null = null;
+      try { est = await searchesApi.estimate(id); } catch { /* ignore */ }
+
+      if (est && est.serpapi_calls > threshold) {
+        setPendingConfirm({ calls: est.serpapi_calls });
+        return;
+      }
+    }
+
+    startSearchStream();
   }
 
   if (searchLoading) return <div className="flex justify-center items-center h-96"><Spinner /></div>;
@@ -193,6 +219,42 @@ export default function SearchDetail() {
           )}
         </div>
       </div>
+
+      {/* Low quota warning banner */}
+      {apiStatus && apiStatus.serpapi && apiStatus.serpapi_used >= apiStatus.serpapi_limit * 0.8 && !running && (
+        <div className="mb-6 flex items-start gap-3 px-4 py-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-sm text-amber-300">
+          <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0 text-amber-400" />
+          <span>
+            <strong className="text-amber-400">Low quota:</strong>{' '}
+            {apiStatus.serpapi_limit - apiStatus.serpapi_used} of {apiStatus.serpapi_limit} SerpApi searches remaining this month.
+          </span>
+        </div>
+      )}
+
+      {/* Quota confirmation */}
+      {pendingConfirm && (
+        <Card className="mb-6 border-amber-500/40 bg-amber-500/5">
+          <div className="flex items-start gap-3">
+            <Zap className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-slate-200 mb-1">This search uses {pendingConfirm.calls} SerpApi call{pendingConfirm.calls !== 1 ? 's' : ''}</p>
+              <p className="text-xs text-slate-400 mb-4">
+                That's more than 1/5 of your monthly quota
+                {apiStatus ? ` (${apiStatus.serpapi_used}/${apiStatus.serpapi_limit} used so far)` : ''}.
+                Continue anyway?
+              </p>
+              <div className="flex gap-2">
+                <Button size="sm" onClick={startSearchStream}>
+                  <Play className="w-3 h-3" />Yes, search now
+                </Button>
+                <Button size="sm" variant="secondary" onClick={() => setPendingConfirm(null)}>
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </div>
+        </Card>
+      )}
 
       {/* Run progress */}
       {runProgress && running && (
