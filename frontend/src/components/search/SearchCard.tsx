@@ -72,7 +72,7 @@ export default function SearchCard({ search }: SearchCardProps) {
         <div className="flex flex-wrap gap-1.5 mb-4">
           <Badge variant="default">{TRIP_TYPE_LABELS[search.trip_type]}</Badge>
           <Badge variant="purple">{MODE_LABELS[search.search_mode]}</Badge>
-          <Badge variant="default">{cabinLabel(search.cabin_class)}</Badge>
+          <Badge variant="default">{(Array.isArray(search.cabin_class) ? search.cabin_class : [search.cabin_class]).map(cabinLabel).join(' · ')}</Badge>
           {search.alert_email && <Badge variant="warning"><Bell className="w-3 h-3 mr-1" />Alert</Badge>}
         </div>
 

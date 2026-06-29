@@ -6,6 +6,25 @@ import { runSearch, cancelSearch, type SearchRecord } from '../services/orchestr
 
 const router = Router();
 
+function parseCabinClass(val: string): string[] {
+  try {
+    const parsed = JSON.parse(val);
+    return Array.isArray(parsed) ? parsed : [parsed];
+  } catch {
+    return [val];
+  }
+}
+
+function serializeSearch(s: Record<string, unknown>) {
+  return {
+    ...s,
+    origin_airports: JSON.parse(s.origin_airports as string),
+    destination_airports: JSON.parse(s.destination_airports as string),
+    cabin_class: parseCabinClass(s.cabin_class as string),
+    airline_codes: s.airline_codes ? JSON.parse(s.airline_codes as string) : null,
+  };
+}
+
 const SearchSchema = z.object({
   name: z.string().min(1).max(100),
   origin_label: z.string().min(1),
@@ -17,7 +36,7 @@ const SearchSchema = z.object({
   window_end: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   min_nights: z.number().int().min(1).max(30).default(2),
   max_nights: z.number().int().min(1).max(30).default(7),
-  cabin_class: z.enum(['ECONOMY', 'PREMIUM_ECONOMY', 'BUSINESS', 'FIRST']).default('ECONOMY'),
+  cabin_class: z.array(z.enum(['ECONOMY', 'PREMIUM_ECONOMY', 'BUSINESS', 'FIRST'])).min(1).default(['ECONOMY']),
   adults: z.number().int().min(1).max(9).default(1),
   airline_codes: z.array(z.string()).nullable().optional(),
   search_mode: z.enum(['cash', 'award', 'both']).default('both'),
@@ -38,12 +57,7 @@ router.get('/', (_req, res) => {
     ORDER BY s.created_at DESC
   `).all();
 
-  res.json((searches as Record<string, unknown>[]).map((s) => ({
-    ...s,
-    origin_airports: JSON.parse(s.origin_airports as string),
-    destination_airports: JSON.parse(s.destination_airports as string),
-    airline_codes: s.airline_codes ? JSON.parse(s.airline_codes as string) : null,
-  })));
+  res.json((searches as Record<string, unknown>[]).map(serializeSearch));
 });
 
 // GET /api/searches/:id
@@ -53,12 +67,7 @@ router.get('/:id', (req, res) => {
     res.status(404).json({ error: 'Search not found' });
     return;
   }
-  res.json({
-    ...search,
-    origin_airports: JSON.parse(search.origin_airports),
-    destination_airports: JSON.parse(search.destination_airports),
-    airline_codes: search.airline_codes ? JSON.parse(search.airline_codes) : null,
-  });
+  res.json(serializeSearch(search as unknown as Record<string, unknown>));
 });
 
 // POST /api/searches
@@ -90,19 +99,14 @@ router.post('/', (req, res) => {
     id, data.name, data.origin_label, data.destination_label,
     JSON.stringify(data.origin_airports), JSON.stringify(data.destination_airports),
     data.trip_type, data.window_start, data.window_end, data.min_nights, data.max_nights,
-    data.cabin_class, data.adults,
+    JSON.stringify(data.cabin_class), data.adults,
     data.airline_codes ? JSON.stringify(data.airline_codes) : null,
     data.search_mode,
     data.alert_email || null, data.alert_threshold_cash || null, data.alert_threshold_points || null
   );
 
   const created = db.prepare(`SELECT * FROM searches WHERE id = ?`).get(id) as SearchRecord;
-  res.status(201).json({
-    ...created,
-    origin_airports: JSON.parse(created.origin_airports),
-    destination_airports: JSON.parse(created.destination_airports),
-    airline_codes: created.airline_codes ? JSON.parse(created.airline_codes) : null,
-  });
+  res.status(201).json(serializeSearch(created as unknown as Record<string, unknown>));
 });
 
 // PUT /api/searches/:id
@@ -133,7 +137,7 @@ router.put('/:id', (req, res) => {
   if (data.window_end !== undefined) { updates.push('window_end = ?'); values.push(data.window_end); }
   if (data.min_nights !== undefined) { updates.push('min_nights = ?'); values.push(data.min_nights); }
   if (data.max_nights !== undefined) { updates.push('max_nights = ?'); values.push(data.max_nights); }
-  if (data.cabin_class !== undefined) { updates.push('cabin_class = ?'); values.push(data.cabin_class); }
+  if (data.cabin_class !== undefined) { updates.push('cabin_class = ?'); values.push(JSON.stringify(data.cabin_class)); }
   if (data.adults !== undefined) { updates.push('adults = ?'); values.push(data.adults); }
   if (data.airline_codes !== undefined) { updates.push('airline_codes = ?'); values.push(data.airline_codes ? JSON.stringify(data.airline_codes) : null); }
   if (data.search_mode !== undefined) { updates.push('search_mode = ?'); values.push(data.search_mode); }
@@ -150,12 +154,7 @@ router.put('/:id', (req, res) => {
   db.prepare(`UPDATE searches SET ${updates.join(', ')} WHERE id = ?`).run(...values);
 
   const updated = db.prepare(`SELECT * FROM searches WHERE id = ?`).get(req.params.id) as SearchRecord;
-  res.json({
-    ...updated,
-    origin_airports: JSON.parse(updated.origin_airports),
-    destination_airports: JSON.parse(updated.destination_airports),
-    airline_codes: updated.airline_codes ? JSON.parse(updated.airline_codes) : null,
-  });
+  res.json(serializeSearch(updated as unknown as Record<string, unknown>));
 });
 
 // PATCH /api/searches/:id/toggle

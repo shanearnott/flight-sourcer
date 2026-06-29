@@ -175,7 +175,7 @@ export default function SearchDetail() {
             <span className="text-slate-600">•</span>
             <span className="capitalize">{search.trip_type}</span>
             <span className="text-slate-600">•</span>
-            <span>{cabinLabel(search.cabin_class)}</span>
+            <span>{(Array.isArray(search.cabin_class) ? search.cabin_class : [search.cabin_class]).map(cabinLabel).join(' · ')}</span>
           </div>
         </div>
         <div className="flex gap-2">

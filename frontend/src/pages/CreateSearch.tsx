@@ -24,7 +24,7 @@ interface FormData {
   window_end: string;
   min_nights: number;
   max_nights: number;
-  cabin_class: 'ECONOMY' | 'PREMIUM_ECONOMY' | 'BUSINESS' | 'FIRST';
+  cabin_class: string[];
   adults: number;
   search_mode: 'cash' | 'award' | 'both';
   airline_codes: string[] | null;
@@ -45,7 +45,7 @@ const defaultForm: FormData = {
   window_end: inThreeMonths,
   min_nights: 2,
   max_nights: 7,
-  cabin_class: 'ECONOMY',
+  cabin_class: ['ECONOMY'],
   adults: 1,
   search_mode: 'both',
   airline_codes: null,
@@ -192,13 +192,23 @@ export default function CreateSearch() {
                 error={errors.destination}
               />
             </div>
-            <div className="grid grid-cols-3 gap-4">
-              <Select label="Cabin Class" value={form.cabin_class} onChange={e => set('cabin_class', e.target.value as FormData['cabin_class'])}>
-                <option value="ECONOMY">Economy</option>
-                <option value="PREMIUM_ECONOMY">Premium Economy</option>
-                <option value="BUSINESS">Business</option>
-                <option value="FIRST">First Class</option>
-              </Select>
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">Cabin Class <span className="text-slate-500 font-normal">(select one or more)</span></label>
+              <div className="grid grid-cols-4 gap-2">
+                {([['ECONOMY', 'Economy'], ['PREMIUM_ECONOMY', 'Prem. Economy'], ['BUSINESS', 'Business'], ['FIRST', 'First']] as const).map(([val, label]) => {
+                  const selected = form.cabin_class.includes(val);
+                  return (
+                    <button key={val} type="button" onClick={() => {
+                      const next = selected ? form.cabin_class.filter(c => c !== val) : [...form.cabin_class, val];
+                      if (next.length > 0) set('cabin_class', next);
+                    }} className={cn('p-2.5 rounded-xl border text-sm font-medium transition-all text-center', selected ? 'border-brand-500 bg-brand-500/10 text-brand-400' : 'border-navy-500 bg-navy-800/50 text-slate-400 hover:border-navy-400')}>
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
               <Select label="Travellers" value={form.adults} onChange={e => set('adults', parseInt(e.target.value))}>
                 {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => <option key={n} value={n}>{n} adult{n > 1 ? 's' : ''}</option>)}
               </Select>
@@ -352,7 +362,7 @@ export default function CreateSearch() {
                 <div className="text-slate-500">Window</div>
                 <div className="text-slate-200">{form.window_start} to {form.window_end}</div>
                 <div className="text-slate-500">Cabin</div>
-                <div className="text-slate-200">{form.cabin_class}</div>
+                <div className="text-slate-200">{form.cabin_class.join(', ')}</div>
                 <div className="text-slate-500">Search type</div>
                 <div className="text-slate-200 capitalize">{form.search_mode}</div>
                 <div className="text-slate-500">Airlines</div>

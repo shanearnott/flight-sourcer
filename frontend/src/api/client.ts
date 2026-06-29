@@ -79,7 +79,7 @@ export interface SavedSearch {
   window_end: string;
   min_nights: number;
   max_nights: number;
-  cabin_class: string;
+  cabin_class: string[];
   adults: number;
   airline_codes: string[] | null;
   search_mode: 'cash' | 'award' | 'both';

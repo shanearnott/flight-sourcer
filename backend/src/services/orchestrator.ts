@@ -54,6 +54,9 @@ export async function runSearch(
   const originAirports: string[] = JSON.parse(search.origin_airports);
   const destAirports: string[] = JSON.parse(search.destination_airports);
   const airlineCodes: string[] | null = search.airline_codes ? JSON.parse(search.airline_codes) : null;
+  const cabinClasses: string[] = (() => {
+    try { const p = JSON.parse(search.cabin_class); return Array.isArray(p) ? p : [p]; } catch { return [search.cabin_class]; }
+  })();
 
   const datePairs = getDatePairs(
     search.trip_type,
@@ -70,7 +73,7 @@ export async function runSearch(
     }
   }
 
-  const totalCalls = airportPairs.length * datePairs.length * (search.search_mode === 'both' ? 2 : 1);
+  const totalCalls = airportPairs.length * datePairs.length * cabinClasses.length * (search.search_mode === 'both' ? 2 : 1);
   let current = 0;
 
   onProgress?.({ type: 'start', message: `Starting search: ${airportPairs.length} routes × ${datePairs.length} date pairs`, total: totalCalls, current: 0 });
@@ -86,6 +89,7 @@ export async function runSearch(
         return;
       }
 
+      for (const cabinClass of cabinClasses) {
       if (search.search_mode === 'cash' || search.search_mode === 'both') {
         try {
           const offers = await searchFlightOffers({
@@ -94,7 +98,7 @@ export async function runSearch(
             departureDate: depart,
             returnDate: ret,
             adults: search.adults,
-            cabinClass: search.cabin_class,
+            cabinClass,
             airlineCodes: airlineCodes || undefined,
             maxResults: 5,
           });
@@ -128,7 +132,7 @@ export async function runSearch(
           const awards = await searchAwardAvailability({
             originCode: orig,
             destinationCode: dest,
-            cabin: search.cabin_class,
+            cabin: cabinClass,
             startDate: depart,
             endDate: ret || depart,
           });
@@ -156,6 +160,7 @@ export async function runSearch(
         onProgress?.({ type: 'progress', message: `Checked awards ${orig}→${dest} ${depart}`, current, total: totalCalls });
         await delay(100);
       }
+      } // end cabinClass loop
     }
   }
 

@@ -67,7 +67,7 @@ function SearchHistoryCard({ search }: { search: import('../api/client').SavedSe
             <ArrowRight className="w-3.5 h-3.5 flex-shrink-0" />
             <span>{search.destination_label}</span>
             <span className="text-slate-600">•</span>
-            <span>{cabinLabel(search.cabin_class)}</span>
+            <span>{(Array.isArray(search.cabin_class) ? search.cabin_class : [search.cabin_class]).map(cabinLabel).join(' · ')}</span>
           </div>
         </div>
         <div className="flex flex-col items-end gap-2">
