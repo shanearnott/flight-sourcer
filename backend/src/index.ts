@@ -7,16 +7,20 @@ import searchesRouter from './routes/searches';
 import flightsRouter from './routes/flights';
 import airlinesRouter from './routes/airlines';
 import historyRouter from './routes/history';
+import demoRouter from './routes/demo';
 
 const PORT = process.env.PORT || 3001;
 
 const app = express();
 
-app.use(cors({
-  origin: process.env.NODE_ENV === 'production'
-    ? false
-    : ['http://localhost:5173', 'http://localhost:3000'],
-}));
+const corsOrigin: string | string[] | boolean =
+  process.env.NODE_ENV !== 'production'
+    ? ['http://localhost:5173', 'http://localhost:3000']
+    : process.env.CORS_ORIGIN
+      ? process.env.CORS_ORIGIN.split(',').map(s => s.trim())
+      : true; // allow all origins in production when no explicit origin is set
+
+app.use(cors({ origin: corsOrigin }));
 app.use(express.json());
 
 // Routes
@@ -24,6 +28,7 @@ app.use('/api/searches', searchesRouter);
 app.use('/api/flights', flightsRouter);
 app.use('/api/airlines', airlinesRouter);
 app.use('/api/history', historyRouter);
+app.use('/api/demo', demoRouter);
 
 // Health check
 app.get('/api/health', (_req, res) => {

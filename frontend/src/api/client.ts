@@ -158,6 +158,11 @@ export const airlinesApi = {
   ffPrograms: () => api.get<Array<{ program: string; airlines: Airline[] }>>('/airlines/ff-programs').then(r => r.data),
 };
 
+export const demoApi = {
+  seed: () => api.post<{ seeded: boolean; searches?: number; message?: string }>('/demo/seed').then(r => r.data),
+  clear: () => api.delete<{ cleared: boolean; removed: number }>('/demo/clear').then(r => r.data),
+};
+
 export const historyApi = {
   get: (searchId: string, type?: 'cash' | 'award', days?: number) =>
     api.get<PriceSnapshot[]>(`/history/${searchId}`, { params: { type, days } }).then(r => r.data),

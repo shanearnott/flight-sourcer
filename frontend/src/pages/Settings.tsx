@@ -1,6 +1,7 @@
-import { Settings2, ExternalLink, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
-import { api } from '../api/client';
+import { useState } from 'react';
+import { Settings2, ExternalLink, CheckCircle, XCircle, AlertTriangle, FlaskConical, Trash2, Loader2 } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { api, demoApi } from '../api/client';
 import { Card, Badge } from '../components/ui';
 
 const isGHPages = import.meta.env.BASE_URL !== '/' && !import.meta.env.VITE_API_URL;
@@ -11,10 +12,36 @@ interface HealthStatus {
 }
 
 export default function Settings() {
+  const queryClient = useQueryClient();
+
   const { data: health } = useQuery({
     queryKey: ['health'],
     queryFn: () => api.get<HealthStatus>('/health').then(r => r.data),
     refetchInterval: 30000,
+  });
+
+  const [demoMsg, setDemoMsg] = useState<{ text: string; ok: boolean } | null>(null);
+
+  const seedMutation = useMutation({
+    mutationFn: demoApi.seed,
+    onSuccess: (data) => {
+      if (data.seeded) {
+        setDemoMsg({ text: `Loaded ${data.searches} demo searches with 90 days of price history.`, ok: true });
+        queryClient.invalidateQueries();
+      } else {
+        setDemoMsg({ text: data.message || 'Demo data already present.', ok: false });
+      }
+    },
+    onError: () => setDemoMsg({ text: 'Could not reach the backend. Make sure it is running.', ok: false }),
+  });
+
+  const clearMutation = useMutation({
+    mutationFn: demoApi.clear,
+    onSuccess: (data) => {
+      setDemoMsg({ text: `Removed ${data.removed} demo search${data.removed !== 1 ? 'es' : ''} and all associated data.`, ok: true });
+      queryClient.invalidateQueries();
+    },
+    onError: () => setDemoMsg({ text: 'Could not reach the backend.', ok: false }),
   });
 
   return (
@@ -107,6 +134,42 @@ export default function Settings() {
             <p className="text-slate-500 ml-7">Configure SMTP settings in <code className="text-xs bg-navy-700 px-1.5 py-0.5 rounded text-brand-400">.env</code>. For Gmail, use an App Password (not your main password). Alerts are sent daily at 6:00 AM when prices are below your threshold.</p>
           </div>
         </div>
+      </Card>
+
+      {/* Demo Data */}
+      <Card className="mb-6">
+        <h2 className="text-base font-semibold text-slate-200 mb-1 flex items-center gap-2">
+          <FlaskConical className="w-4 h-4 text-brand-400" />
+          Demo Data
+        </h2>
+        <p className="text-sm text-slate-500 mb-4">
+          Populate the app with 4 sample searches (SYD→LAX, MEL→LHR, SYD→BKK, BNE→NRT) and 90 days of
+          synthetic price history — no API keys required. Useful for exploring the UI before connecting a backend.
+        </p>
+        <div className="flex items-center gap-3 flex-wrap">
+          <button
+            onClick={() => { setDemoMsg(null); seedMutation.mutate(); }}
+            disabled={seedMutation.isPending || clearMutation.isPending}
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-brand-600 hover:bg-brand-500 disabled:opacity-50 disabled:cursor-not-allowed text-white transition-colors"
+          >
+            {seedMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <FlaskConical className="w-4 h-4" />}
+            Load Demo Data
+          </button>
+          <button
+            onClick={() => { setDemoMsg(null); clearMutation.mutate(); }}
+            disabled={seedMutation.isPending || clearMutation.isPending}
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border border-red-500/40 hover:bg-red-500/10 disabled:opacity-50 disabled:cursor-not-allowed text-red-400 transition-colors"
+          >
+            {clearMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+            Remove Demo Data
+          </button>
+        </div>
+        {demoMsg && (
+          <p className={`mt-3 text-sm ${demoMsg.ok ? 'text-emerald-400' : 'text-amber-400'}`}>
+            {demoMsg.ok ? <CheckCircle className="w-3.5 h-3.5 inline mr-1.5 -mt-0.5" /> : <AlertTriangle className="w-3.5 h-3.5 inline mr-1.5 -mt-0.5" />}
+            {demoMsg.text}
+          </p>
+        )}
       </Card>
 
       {/* .env template */}
