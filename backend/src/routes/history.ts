@@ -3,79 +3,7 @@ import { db } from '../db/index';
 
 const router = Router();
 
-// GET /api/history/:searchId - price history for chart
-router.get('/:searchId', (req, res) => {
-  const { searchId } = req.params;
-  const { type = 'cash', days = '90' } = req.query;
-
-  const search = db.prepare(`SELECT id FROM searches WHERE id = ?`).get(searchId);
-  if (!search) {
-    res.status(404).json({ error: 'Search not found' });
-    return;
-  }
-
-  const snapshots = db.prepare(`
-    SELECT
-      date(checked_at) as date,
-      snapshot_type,
-      MIN(min_price) as min_price,
-      MAX(max_price) as max_price,
-      AVG((min_price + max_price) / 2) as avg_price,
-      COUNT(*) as checks
-    FROM price_snapshots
-    WHERE search_id = ?
-      AND snapshot_type = ?
-      AND checked_at >= datetime('now', ?)
-    GROUP BY date(checked_at), snapshot_type
-    ORDER BY date ASC
-  `).all(searchId, type, `-${days} days`) as {
-    date: string;
-    snapshot_type: string;
-    min_price: number;
-    max_price: number;
-    avg_price: number;
-    checks: number;
-  }[];
-
-  res.json(snapshots);
-});
-
-// GET /api/history/:searchId/latest - latest snapshot results
-router.get('/:searchId/latest', (req, res) => {
-  const { searchId } = req.params;
-  const { type = 'cash' } = req.query;
-
-  const snapshot = db.prepare(`
-    SELECT * FROM price_snapshots
-    WHERE search_id = ? AND snapshot_type = ?
-    ORDER BY checked_at DESC
-    LIMIT 1
-  `).get(searchId, type) as { results: string; checked_at: string; min_price: number; max_price: number } | undefined;
-
-  if (!snapshot) {
-    res.json({ results: [], checked_at: null, min_price: null, max_price: null });
-    return;
-  }
-
-  res.json({
-    ...snapshot,
-    results: JSON.parse(snapshot.results),
-  });
-});
-
-// GET /api/history/:searchId/alerts - alert history
-router.get('/:searchId/alerts', (req, res) => {
-  const { searchId } = req.params;
-
-  const alerts = db.prepare(`
-    SELECT * FROM alerts_log
-    WHERE search_id = ?
-    ORDER BY sent_at DESC
-    LIMIT 50
-  `).all(searchId);
-
-  res.json(alerts);
-});
+// Static routes MUST come before /:searchId to avoid being swallowed by the wildcard.
 
 // GET /api/history/all-flights?type=cash&sort=price - all latest results across searches
 router.get('/all-flights', (req, res) => {
@@ -158,6 +86,80 @@ router.get('/stats/overview', (_req, res) => {
     totalSnapshots,
     recentLows,
   });
+});
+
+// GET /api/history/:searchId - price history for chart
+router.get('/:searchId', (req, res) => {
+  const { searchId } = req.params;
+  const { type = 'cash', days = '90' } = req.query;
+
+  const search = db.prepare(`SELECT id FROM searches WHERE id = ?`).get(searchId);
+  if (!search) {
+    res.status(404).json({ error: 'Search not found' });
+    return;
+  }
+
+  const snapshots = db.prepare(`
+    SELECT
+      date(checked_at) as date,
+      snapshot_type,
+      MIN(min_price) as min_price,
+      MAX(max_price) as max_price,
+      AVG((min_price + max_price) / 2) as avg_price,
+      COUNT(*) as checks
+    FROM price_snapshots
+    WHERE search_id = ?
+      AND snapshot_type = ?
+      AND checked_at >= datetime('now', ?)
+    GROUP BY date(checked_at), snapshot_type
+    ORDER BY date ASC
+  `).all(searchId, type, `-${days} days`) as {
+    date: string;
+    snapshot_type: string;
+    min_price: number;
+    max_price: number;
+    avg_price: number;
+    checks: number;
+  }[];
+
+  res.json(snapshots);
+});
+
+// GET /api/history/:searchId/latest - latest snapshot results
+router.get('/:searchId/latest', (req, res) => {
+  const { searchId } = req.params;
+  const { type = 'cash' } = req.query;
+
+  const snapshot = db.prepare(`
+    SELECT * FROM price_snapshots
+    WHERE search_id = ? AND snapshot_type = ?
+    ORDER BY checked_at DESC
+    LIMIT 1
+  `).get(searchId, type) as { results: string; checked_at: string; min_price: number; max_price: number } | undefined;
+
+  if (!snapshot) {
+    res.json({ results: [], checked_at: null, min_price: null, max_price: null });
+    return;
+  }
+
+  res.json({
+    ...snapshot,
+    results: JSON.parse(snapshot.results),
+  });
+});
+
+// GET /api/history/:searchId/alerts - alert history
+router.get('/:searchId/alerts', (req, res) => {
+  const { searchId } = req.params;
+
+  const alerts = db.prepare(`
+    SELECT * FROM alerts_log
+    WHERE search_id = ?
+    ORDER BY sent_at DESC
+    LIMIT 50
+  `).all(searchId);
+
+  res.json(alerts);
 });
 
 export default router;

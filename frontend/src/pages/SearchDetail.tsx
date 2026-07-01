@@ -240,29 +240,31 @@ export default function SearchDetail({ autoRun = false }: { autoRun?: boolean })
         </div>
       )}
 
-      {/* Quota confirmation */}
+      {/* Quota confirmation modal */}
       {pendingConfirm && (
-        <Card className="mb-6 border-amber-500/40 bg-amber-500/5">
-          <div className="flex items-start gap-3">
-            <Zap className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <p className="text-sm font-medium text-slate-200 mb-1">This search uses {pendingConfirm.calls} SerpApi call{pendingConfirm.calls !== 1 ? 's' : ''}</p>
-              <p className="text-xs text-slate-400 mb-4">
-                That's more than 1/5 of your monthly quota
-                {apiStatus ? ` (${apiStatus.serpapi_used}/${apiStatus.serpapi_limit} used so far)` : ''}.
-                Continue anyway?
-              </p>
-              <div className="flex gap-2">
-                <Button size="sm" onClick={startSearchStream}>
-                  <Play className="w-3 h-3" />Yes, search now
-                </Button>
-                <Button size="sm" variant="secondary" onClick={() => setPendingConfirm(null)}>
-                  Cancel
-                </Button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/70" onClick={() => setPendingConfirm(null)} />
+          <div className="relative w-full max-w-sm bg-navy-800 border border-amber-500/40 rounded-2xl shadow-2xl p-6">
+            <div className="flex items-start gap-3 mb-4">
+              <Zap className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-base font-semibold text-slate-100 mb-1">Large search — confirm?</p>
+                <p className="text-sm text-slate-400">
+                  This search uses <strong className="text-amber-400">{pendingConfirm.calls} SerpApi calls</strong> — more than 1/5 of your monthly quota
+                  {apiStatus ? ` (${apiStatus.serpapi_used}/${apiStatus.serpapi_limit} used so far)` : ''}.
+                </p>
               </div>
             </div>
+            <div className="flex gap-2 justify-end">
+              <Button size="sm" variant="secondary" onClick={() => setPendingConfirm(null)}>
+                Cancel
+              </Button>
+              <Button size="sm" onClick={startSearchStream}>
+                <Play className="w-3 h-3" />Search anyway
+              </Button>
+            </div>
           </div>
-        </Card>
+        </div>
       )}
 
       {/* Run progress */}
