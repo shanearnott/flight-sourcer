@@ -6,6 +6,7 @@ import CreateSearch from './pages/CreateSearch';
 import EditSearch from './pages/EditSearch';
 import SearchDetail from './pages/SearchDetail';
 import PriceHistory from './pages/PriceHistory';
+import Flights from './pages/Flights';
 import AlertLog from './pages/AlertLog';
 import Settings from './pages/Settings';
 
@@ -19,6 +20,7 @@ export default function App() {
         <Route path="search/:id" element={<SearchDetail />} />
         <Route path="search/:id/run" element={<SearchDetail autoRun />} />
         <Route path="search/:id/edit" element={<EditSearch />} />
+        <Route path="flights" element={<Flights />} />
         <Route path="history" element={<PriceHistory />} />
         <Route path="alerts" element={<AlertLog />} />
         <Route path="settings" element={<Settings />} />

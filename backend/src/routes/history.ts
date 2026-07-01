@@ -77,6 +77,65 @@ router.get('/:searchId/alerts', (req, res) => {
   res.json(alerts);
 });
 
+// GET /api/history/all-flights?type=cash&sort=price - all latest results across searches
+router.get('/all-flights', (req, res) => {
+  const { type = 'cash', sort = 'price' } = req.query;
+
+  const snapshots = db.prepare(`
+    SELECT p.results, p.checked_at, p.snapshot_type,
+      s.id as search_id, s.name as search_name,
+      s.origin_label, s.destination_label
+    FROM (
+      SELECT search_id, MAX(checked_at) as max_at
+      FROM price_snapshots
+      WHERE snapshot_type = ?
+      GROUP BY search_id
+    ) latest
+    JOIN price_snapshots p
+      ON p.search_id = latest.search_id
+      AND p.checked_at = latest.max_at
+      AND p.snapshot_type = ?
+    JOIN searches s ON s.id = p.search_id
+    WHERE s.is_active = 1
+  `).all(type, type) as Array<{
+    results: string;
+    checked_at: string;
+    snapshot_type: string;
+    search_id: string;
+    search_name: string;
+    origin_label: string;
+    destination_label: string;
+  }>;
+
+  type Entry = { flight: Record<string, unknown>; search: { id: string; name: string; origin_label: string; destination_label: string }; checked_at: string };
+  const all: Entry[] = [];
+
+  for (const snap of snapshots) {
+    try {
+      const results = JSON.parse(snap.results);
+      if (Array.isArray(results)) {
+        for (const flight of results) {
+          all.push({
+            flight: flight as Record<string, unknown>,
+            search: { id: snap.search_id, name: snap.search_name, origin_label: snap.origin_label, destination_label: snap.destination_label },
+            checked_at: snap.checked_at,
+          });
+        }
+      }
+    } catch { /* skip */ }
+  }
+
+  if (sort === 'price') {
+    all.sort((a, b) => ((a.flight.price ?? a.flight.pointsCost ?? 0) as number) - ((b.flight.price ?? b.flight.pointsCost ?? 0) as number));
+  } else if (sort === 'date') {
+    all.sort((a, b) => ((a.flight.departureDate ?? a.flight.date ?? '') as string).localeCompare((b.flight.departureDate ?? b.flight.date ?? '') as string));
+  } else if (sort === 'airline') {
+    all.sort((a, b) => ((a.flight.airline ?? a.flight.partner ?? '') as string).localeCompare((b.flight.airline ?? b.flight.partner ?? '') as string));
+  }
+
+  res.json(all.slice(0, 500));
+});
+
 // GET /api/history/stats/overview - dashboard stats
 router.get('/stats/overview', (_req, res) => {
   const activeSearches = (db.prepare(`SELECT COUNT(*) as count FROM searches WHERE is_active = 1`).get() as { count: number }).count;

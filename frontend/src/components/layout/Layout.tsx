@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
-import { Plane, LayoutDashboard, Search, Bell, Settings, TrendingUp, Menu, X } from 'lucide-react';
+import { Plane, LayoutDashboard, Search, Bell, Settings, TrendingUp, List, Menu, X } from 'lucide-react';
 import { cn } from '../../utils/cn';
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
   { to: '/searches', label: 'Searches', icon: Search },
+  { to: '/flights', label: 'All Flights', icon: List },
   { to: '/history', label: 'Price History', icon: TrendingUp },
   { to: '/alerts', label: 'Alert Log', icon: Bell },
   { to: '/settings', label: 'Settings', icon: Settings },

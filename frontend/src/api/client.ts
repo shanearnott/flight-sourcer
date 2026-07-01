@@ -184,6 +184,18 @@ export const demoApi = {
   clear: () => api.delete<{ cleared: boolean; removed: number }>('/demo/clear').then(r => r.data),
 };
 
+export interface FlightEntry {
+  flight: FlightOffer;
+  search: { id: string; name: string; origin_label: string; destination_label: string };
+  checked_at: string;
+}
+
+export interface AwardEntry {
+  flight: AwardOffer;
+  search: { id: string; name: string; origin_label: string; destination_label: string };
+  checked_at: string;
+}
+
 export const historyApi = {
   get: (searchId: string, type?: 'cash' | 'award', days?: number) =>
     api.get<PriceSnapshot[]>(`/history/${searchId}`, { params: { type, days } }).then(r => r.data),
@@ -191,6 +203,8 @@ export const historyApi = {
     api.get<{ results: FlightOffer[] | AwardOffer[]; checked_at: string; min_price: number; max_price: number }>(
       `/history/${searchId}/latest`, { params: { type } }
     ).then(r => r.data),
+  allFlights: (type: 'cash' | 'award', sort: 'price' | 'date' | 'airline') =>
+    api.get<FlightEntry[] | AwardEntry[]>('/history/all-flights', { params: { type, sort } }).then(r => r.data),
   alerts: (searchId: string) =>
     api.get(`/history/${searchId}/alerts`).then(r => r.data),
   stats: () => api.get<DashboardStats>('/history/stats/overview').then(r => r.data),
